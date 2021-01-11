@@ -12,13 +12,13 @@ interface DataPoint {
     cap_creation_date: Date;
 }
 
-export interface AveragePriceDataPoint {
+export interface PriceDataPoint {
     outcome: number;
     price: string;
 }
 
 function getAveragePricePerDataPoint(dataPoints: Map<string, DataPoint[]>, outcomesInMarket: number[]) {
-    const result = new Map<string, AveragePriceDataPoint[]>();
+    const result = new Map<string, PriceDataPoint[]>();
 
     // Calculate the average price per date for a outcome
     dataPoints.forEach((pointsAtTime, dataPointKey) => {
@@ -44,7 +44,7 @@ function getAveragePricePerDataPoint(dataPoints: Map<string, DataPoint[]>, outco
 
         // Mapping the prices to the data points
         const prices = calcPrice(latestBalances.map(b => b.balance))
-        const averagePriceDataPoint: AveragePriceDataPoint[] = latestBalances.map((balance, index) => ({
+        const averagePriceDataPoint: PriceDataPoint[] = latestBalances.map((balance, index) => ({
             outcome: balance.outcome,
             price: prices[index].toString(),
         }));
@@ -55,7 +55,7 @@ function getAveragePricePerDataPoint(dataPoints: Map<string, DataPoint[]>, outco
     return result;
 }
 
-export async function getPriceHistory(db: Db, poolId: string, beginTimestamp: number, endTimestamp: number, dateMetric: DateMetric = DateMetric.hour): Promise<Map<string, AveragePriceDataPoint[]>> {
+export async function getPriceHistory(db: Db, poolId: string, beginTimestamp: number, endTimestamp: number, dateMetric: DateMetric = DateMetric.hour): Promise<Map<string, PriceDataPoint[]>> {
     try {
         const balances = await queryBalances(db, {
             account_id: PROTOCOL_ACCOUNT,
@@ -96,4 +96,43 @@ export async function getPriceHistory(db: Db, poolId: string, beginTimestamp: nu
         console.error('[getPriceHistory]', error);
         return new Map();
     }
+}
+
+export const DATA_POINT_KEY_24_HOUR = '24-hour';
+
+export async function getPriceForDay(db: Db, poolId: string, beginTimestamp: number) {
+    const endDate = addDays(beginTimestamp, 1);
+    const balances = await queryBalances(db, {
+        account_id: PROTOCOL_ACCOUNT,
+        pool_id: poolId,
+        cap_creation_date: {
+            $gte: new Date(beginTimestamp),
+            $lte: endDate,
+        }
+    });
+
+    const dataPoints = new Map<string, DataPoint[]>();
+    const outcomesInMarket: number[] = [];
+
+    balances.forEach((balance) => {
+        const dataPoint: DataPoint = {
+            outcome: balance.outcome_id,
+            balance: balance.balance,
+            cap_creation_date: balance.cap_creation_date,
+        };
+
+        if (!outcomesInMarket.includes(balance.outcome_id)) {
+            outcomesInMarket.push(balance.outcome_id);
+        }
+
+        const currentDataPointsAtDate = dataPoints.get(DATA_POINT_KEY_24_HOUR);
+
+        if (!currentDataPointsAtDate) {
+            dataPoints.set(DATA_POINT_KEY_24_HOUR, [dataPoint]);
+        } else {
+            currentDataPointsAtDate.push(dataPoint);
+        }
+    });
+
+    return getAveragePricePerDataPoint(dataPoints, outcomesInMarket);
 }

@@ -1,14 +1,14 @@
 import { gql } from 'apollo-server';
 
 const typeDef = gql`
-    type AveragePriceForOutcome {
+    type PriceForOutcome {
         outcome: Int
         price: String
     }
 
-    type AveragePriceDataPoint {
+    type PriceDataPoint {
         pointKey: String
-        dataPoints: [AveragePriceForOutcome]
+        dataPoints: [PriceForOutcome]
     }
 
     enum DateMetric {
@@ -21,8 +21,8 @@ const typeDef = gql`
     }
 
     extend type Query {
-        getAveragePriceHistory(poolId: String!, beginTimestamp: String!, endTimestamp: String, dateMetric: DateMetric): [AveragePriceDataPoint]
-        # getAveragePriceForDay(marketId: String!, beginTimestamp: String!): PriceDataPoint
+        getPriceHistory(poolId: String!, beginTimestamp: String!, endTimestamp: String, dateMetric: DateMetric): [PriceDataPoint]
+        getPriceForDay(poolId: String!, beginTimestamp: String!): PriceDataPoint
     }
 `;
 
