@@ -33,15 +33,27 @@ async function filterDuplicateBalances(cursor: Cursor<Balance>) {
     return balances;
 }
 
-export async function getBalancesByAccountId(db: Db, accountId: string): Promise<Balance[]> {
+export async function queryBalances(db: Db, query: FilterQuery<Balance>, filterDuplicates = true): Promise<Balance[]> {
     try {
         const collection = db.collection(USER_BALANCES_COLLECTION_NAME);
-        const query: FilterQuery<Balance> = {
-            account_id: accountId,
-        };
-
         const cursor = collection.find<Balance>(query).sort({ cap_creation_date: -1 });
-        return filterDuplicateBalances(cursor);
+
+        if (filterDuplicates) {
+            return filterDuplicateBalances(cursor);
+        }
+
+        return cursor.toArray();
+    } catch (error) {
+        console.error('[queryBalances]', error);
+        return [];
+    }
+}
+
+export async function getBalancesByAccountId(db: Db, accountId: string): Promise<Balance[]> {
+    try {
+        return queryBalances(db, {
+            account_id: accountId,
+        });
     } catch (error) {
         console.error('[getBalancesByAccountId]', error);
         return [];
@@ -95,7 +107,6 @@ export async function getWithdrawableFees(db: Db, accountId: string): Promise<Po
             if (!pool || !tokenStatus) {
                 throw new Error('Corrupted data');
             }
-
 
             let feesEarned = (new Big(pool.fee_pool_weight).mul(poolToken.balance)).div(tokenStatus.total_supply);
 
