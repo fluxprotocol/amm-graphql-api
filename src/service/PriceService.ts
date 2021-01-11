@@ -1,4 +1,5 @@
 import Big from 'big.js';
+import { Balance } from '../models/Balance';
 
 /**
  * Computes the price of each outcome token given their holdings. Returns an array of numbers in the range [0, 1]
@@ -6,8 +7,8 @@ import Big from 'big.js';
  * @param poolBalances - the market maker's balances of outcome tokens
  * @author TokenUnion https://github.com/TokenUnion/amm-maths/blob/master/src/fpmm/price/calcPrice.ts
  */
-export const calcPrice = (poolBalances: string[]): number[] => {
-    const balances = poolBalances.map(h => new Big(h.toString()));
+export function calcPrice(poolBalances: string[]): number[] {
+    const balances = poolBalances.map(h => new Big(h));
 
     const hasZeroBalances = balances.every(h => h.toString() === "0");
     if (hasZeroBalances) {
@@ -20,3 +21,22 @@ export const calcPrice = (poolBalances: string[]): number[] => {
 
     return prices.map(price => +price.valueOf());
 };
+
+
+export function getWeightForOutcome(outcome: number, balances: Balance[]): string {
+    let oddsWeightForTarget: Big = new Big(0);
+
+    balances.forEach((balanceItem) => {
+        if (balanceItem.outcome_id !== outcome) {
+            const balance = new Big(balanceItem.balance);
+
+            if (oddsWeightForTarget.eq(new Big(0))) {
+                oddsWeightForTarget = balance;
+            } else {
+                oddsWeightForTarget = oddsWeightForTarget.mul(balance);
+            }
+        }
+    });
+
+    return oddsWeightForTarget.toString();
+}

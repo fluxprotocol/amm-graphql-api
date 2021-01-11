@@ -1,13 +1,13 @@
 import { Context } from "../../main";
 import { Pool } from "../../models/Pool";
 import { getPoolById } from "../../service/PoolService";
-import { getTokenStatusesByPool } from "../../service/TokenStatusesService";
+import { getTokensInfoByPool } from "../../service/TokenStatusesService";
 import { getBalancesForPoolId } from "../../service/UserBalanceService";
 
 const resolvers = {
     Pool: {
-        token_statuses: async (parent: Pool, args: any, context: Context) => {
-            return getTokenStatusesByPool(context.db, parent.id);
+        tokens_info: async (parent: Pool, args: any, context: Context) => {
+            return getTokensInfoByPool(context.db, parent.id);
         },
 
         pool_balances: async (parent: Pool, args: any, context: Context) => {

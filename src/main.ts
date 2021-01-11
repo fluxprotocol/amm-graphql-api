@@ -3,9 +3,10 @@ import { Db } from 'mongodb';
 import express from 'express';
 import * as account from './schemes/Account';
 import * as pool from './schemes/Pool';
-import * as tokenStatus from './schemes/TokenStatus';
+import * as tokenInfo from './schemes/TokenInfo';
 import * as balances from './schemes/Balance';
 import * as poolBalances from './schemes/PoolBalance';
+import * as poolTokenFeesEarned from './schemes/PoolTokenFeesEarned';
 import bootDatabase from './database';
 import { APP_PORT } from './constants';
 
@@ -26,10 +27,11 @@ async function main() {
         typeDefs: [
             typeDef,
             pool.typeDef,
-            tokenStatus.typeDef,
+            tokenInfo.typeDef,
             balances.typeDef,
             account.typeDef,
             poolBalances.typeDef,
+            poolTokenFeesEarned.typeDef,
         ],
         resolvers: [
             pool.resolvers,

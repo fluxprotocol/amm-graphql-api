@@ -9,6 +9,7 @@ const typeDef = gql`
         balance: String
         block_height: String
         price: Float
+        weight: String
     }
 `;
 

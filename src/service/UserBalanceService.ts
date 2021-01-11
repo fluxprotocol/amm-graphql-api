@@ -1,9 +1,15 @@
 import { Cursor, Db, FilterQuery } from "mongodb";
 import { Balance } from "../models/Balance";
 import { PROTOCOL_ACCOUNT } from '../constants';
-import { calcPrice } from "./PriceService";
-import BN from "bn.js";
+import { calcPrice, getWeightForOutcome } from "./PriceService";
+import { getTokensInfoByCondition } from './TokenStatusesService';
 import { PoolBalanceViewModel, transformToPoolBalanceViewModel } from "../models/PoolBalanceViewModel";
+import { Pool } from "../models/Pool";
+import { getPoolById, getPoolsByIds, getPoolTokensForAccountId } from "./PoolService";
+import { TokenStatus } from "../models/TokenStatus";
+import { PoolTokensFeesEarnedViewModel } from "../models/PoolTokenFeesEarnedViewModel";
+import Big from "big.js";
+import { getWithdrawnFeesByCondition } from "./WithdrawnFeesService";
 
 const USER_BALANCES_COLLECTION_NAME = 'user_balances';
 
@@ -54,9 +60,57 @@ export async function getBalancesForPoolId(db: Db, poolId: string): Promise<Pool
         const balances = await filterDuplicateBalances(cursor);
         const prices = calcPrice(balances.map(b => b.balance));
 
-        return balances.map((balance, index) => transformToPoolBalanceViewModel(balance, prices[index]));
+        return balances.map((balance, index) => transformToPoolBalanceViewModel(
+            balance,
+            prices[index],
+            getWeightForOutcome(balance.outcome_id, balances)
+        ));
     } catch (error) {
         console.error('[getBalancesForPoolId]', error);
+        return [];
+    }
+}
+
+export async function getWithdrawableFees(db: Db, accountId: string): Promise<PoolTokensFeesEarnedViewModel[]> {
+    try {
+        const poolTokens = await getPoolTokensForAccountId(db, accountId);
+        const tokenStatusQuery: Partial<TokenStatus>[] = poolTokens.map(token => ({
+            outcome_id: token.outcome_id,
+            pool_id: token.pool_id,
+        }));
+
+        const withdrawnFees = await getWithdrawnFeesByCondition(db, poolTokens.map(token => ({
+            outcome_id: token.outcome_id,
+            account_id: token.account_id,
+            pool_id: token.pool_id,
+        })));
+
+        const pools = await getPoolsByIds(db, poolTokens.map(token => token.pool_id));
+        const tokenStatuses = await getTokensInfoByCondition(db, tokenStatusQuery);
+        return poolTokens.map((poolToken) => {
+            const pool = pools.find(pool => pool.id === poolToken.pool_id);
+            const tokenStatus = tokenStatuses.find(status => status.pool_id === poolToken.pool_id);
+            const withdrawnFee = withdrawnFees.find(fee => fee.pool_id === poolToken.pool_id);
+
+            if (!pool || !tokenStatus) {
+                throw new Error('Corrupted data');
+            }
+
+
+            let feesEarned = (new Big(pool.fee_pool_weight).mul(poolToken.balance)).div(tokenStatus.total_supply);
+
+            if (withdrawnFee) {
+                feesEarned = feesEarned.sub(withdrawnFee.withdrawn_amount);
+            }
+
+            return {
+                poolId: poolToken.pool_id,
+                outcomeId: poolToken.outcome_id,
+                fees: feesEarned.toString(),
+            };
+        });
+    } catch (error) {
+        console.error('[getWithdrawableFees]', error);
         return [];
     }
 }

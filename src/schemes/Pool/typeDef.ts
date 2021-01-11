@@ -13,7 +13,7 @@ const typeDef = gql`
         finalized: Boolean
         block_height: String
 
-        token_statuses: [TokenStatus]
+        tokens_info: [TokenInfo]
         pool_balances: [PoolBalance]
     }
 

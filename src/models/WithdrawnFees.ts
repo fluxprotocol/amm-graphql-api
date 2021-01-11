@@ -1,9 +1,9 @@
 import { CapacitorLog } from "./CapacitorLog";
 
-export interface TokenStatus extends CapacitorLog {
-    id: string;
+export interface WithdrawnFees extends CapacitorLog {
     pool_id: string;
     outcome_id: number;
-    total_supply: string;
+    account_id: string;
+    withdrawn_amount: string;
     block_height: string;
 }
