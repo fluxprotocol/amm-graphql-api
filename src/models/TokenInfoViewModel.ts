@@ -8,6 +8,6 @@ export interface TokenInfoViewModel extends TokenStatus {
 export function transformToTokenInfoViewModel(tokenStatus: TokenStatus, pool: Pool): TokenInfoViewModel {
     return {
         ...tokenStatus,
-        is_pool_token: tokenStatus.outcome_id === pool.num_of_outcomes,
+        is_pool_token: tokenStatus.outcome_id === pool.outcomes,
     };
 }
