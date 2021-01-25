@@ -10,6 +10,7 @@ const typeDef = gql`
         pool: Pool
         payout_numerator: [String]
         finalized: Boolean
+        categories: [String]
 
         volume: String
     }
