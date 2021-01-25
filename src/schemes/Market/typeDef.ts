@@ -2,7 +2,7 @@ import { gql } from 'apollo-server';
 
 const typeDef = gql`
     type Market {
-        id: Int
+        id: String
         description: String
         extra_info: String
         outcome_tags: [String]
@@ -26,7 +26,7 @@ const typeDef = gql`
     }
 
     extend type Query {
-        getMarket(marketId: Int!): Market
+        getMarket(marketId: String!): Market
         getMarkets(filters: MarketPaginationFilters): MarketPaginationResult
     }
 `;

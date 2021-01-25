@@ -1,7 +1,7 @@
 import { Pool } from "./Pool";
 
 export interface Market {
-    id: number;
+    id: string;
     description: string;
     extra_info: string;
     outcome_tags: string[];

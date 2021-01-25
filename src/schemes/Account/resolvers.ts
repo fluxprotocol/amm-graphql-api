@@ -4,8 +4,8 @@ import { getBalancesByAccountId, getWithdrawableFees } from "../../service/UserB
 
 const resolvers = {
     Account: {
-        balances: async (parent: Account, args: any, context: Context) => {
-            return getBalancesByAccountId(context.db, parent.account_id);
+        balances: async (parent: Account, args: { poolId?: string }, context: Context) => {
+            return getBalancesByAccountId(context.db, parent.account_id, args.poolId);
         },
 
         earned_fees: async (parent: Account, args: any, context: Context) => {

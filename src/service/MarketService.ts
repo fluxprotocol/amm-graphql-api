@@ -15,7 +15,7 @@ export async function getMarkets(db: Db, filterOptions?: Partial<MarketFilters>)
     const collection = db.collection(MARKETS_COLLECTION_NAME);
 
     const filters: MarketFilters = {
-        limit: 0,
+        limit: 10,
         offset: 0,
         categories: [],
         ...filterOptions,
@@ -27,7 +27,9 @@ export async function getMarkets(db: Db, filterOptions?: Partial<MarketFilters>)
         };
     }
 
-    query.finalized = filters.finalized;
+    if (typeof filters.finalized !== 'undefined') {
+        query.finalized = filters.finalized;
+    }
 
     // Only filter out the expired if the user wants them (resolution for example)
     if (typeof filters.expired !== 'undefined') {
@@ -56,14 +58,12 @@ export async function getMarkets(db: Db, filterOptions?: Partial<MarketFilters>)
     };
 }
 
-export async function getMarketById(db: Db, id: number): Promise<Market | null> {
+export async function getMarketById(db: Db, id: string): Promise<Market | null> {
     try {
         const collection = db.collection(MARKETS_COLLECTION_NAME);
         const query: FilterQuery<Market> = {
             id,
         };
-
-        const r = await collection.findOne<Market>(query);
 
         return collection.findOne<Market>(query);
     } catch (error) {

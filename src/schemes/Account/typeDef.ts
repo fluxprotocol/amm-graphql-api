@@ -4,7 +4,7 @@ const typeDef = gql`
     type Account {
         account_id: String
 
-        balances: [Balance]
+        balances(marketId: String): [Balance]
 
         earned_fees: [PoolTokenFeesEarned]
     }

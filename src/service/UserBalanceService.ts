@@ -48,10 +48,11 @@ export async function queryBalances(db: Db, query: FilterQuery<Balance>, filterD
     }
 }
 
-export async function getBalancesByAccountId(db: Db, accountId: string): Promise<Balance[]> {
+export async function getBalancesByAccountId(db: Db, accountId: string, poolId?: string): Promise<Balance[]> {
     try {
         return queryBalances(db, {
             account_id: accountId,
+            pool_id: poolId,
         });
     } catch (error) {
         console.error('[getBalancesByAccountId]', error);

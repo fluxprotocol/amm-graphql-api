@@ -14,7 +14,7 @@ const resolvers = {
         },
     },
     Query: {
-        getMarket: async (parent: any, args: { marketId: number }, context: Context) => {
+        getMarket: async (parent: any, args: { marketId: string }, context: Context) => {
             return getMarketById(context.db, args.marketId);
         },
 
