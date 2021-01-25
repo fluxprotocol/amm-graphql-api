@@ -1,7 +1,7 @@
 import { CapacitorLog } from "./CapacitorLog";
 
 export interface Swap extends CapacitorLog {
-    pool_id: number;
+    pool_id: string;
     account_id: string;
     outcome_id: number;
     input: string;
