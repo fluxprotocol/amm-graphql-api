@@ -1,6 +1,8 @@
+import Big from "big.js";
 import { Db, FilterQuery } from "mongodb";
 import { Market } from "../models/Market";
 import { PaginationFilters, PaginationResult } from "../models/PaginationResult";
+import { getSwapCursorByMarketId } from "./SwapService";
 
 const MARKETS_COLLECTION_NAME = 'markets';
 
@@ -69,5 +71,28 @@ export async function getMarketById(db: Db, id: string): Promise<Market | null> 
     } catch (error) {
         console.error('[getMarketById]', error);
         return null;
+    }
+}
+
+export async function getVolumeForMarket(db: Db, marketId: string): Promise<string> {
+    try {
+        const swapCursor = getSwapCursorByMarketId(db, marketId);
+        let totalVolume = new Big(0);
+
+        while (await swapCursor.hasNext()) {
+            const swap = await swapCursor.next();
+            if (!swap) continue;
+
+            if (swap.type === 'buy') {
+                totalVolume = totalVolume.add(swap.input);
+            } else {
+                totalVolume = totalVolume.add(swap.output);
+            }
+        }
+
+        return totalVolume.toString();
+    } catch (error) {
+        console.error('[getVolumeForMarket]', error);
+        return '0';
     }
 }

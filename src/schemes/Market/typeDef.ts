@@ -10,6 +10,8 @@ const typeDef = gql`
         pool: Pool
         payout_numerator: [String]
         finalized: Boolean
+
+        volume: String
     }
 
     input MarketPaginationFilters {

@@ -1,6 +1,6 @@
 import { Context } from "../../main";
 import { Market } from "../../models/Market";
-import { getMarketById, getMarkets, MarketFilters } from "../../service/MarketService";
+import { getMarketById, getMarkets, getVolumeForMarket, MarketFilters } from "../../service/MarketService";
 import { getPoolById } from "../../service/PoolService";
 
 const resolvers = {
@@ -11,6 +11,10 @@ const resolvers = {
             }
 
             return getPoolById(context.db, parent.id.toString());
+        },
+
+        volume: async (parent: Market, args: any, context: Context) => {
+            return getVolumeForMarket(context.db, parent.id);
         },
     },
     Query: {
