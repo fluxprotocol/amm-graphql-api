@@ -5,6 +5,9 @@ const typeDef = gql`
         outcomeId: Int
         poolId: String
         fees: String
+        balance: String
+
+        market: Market
     }
 `;
 

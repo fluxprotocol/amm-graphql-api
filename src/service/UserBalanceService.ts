@@ -118,6 +118,7 @@ export async function getWithdrawableFees(db: Db, accountId: string): Promise<Po
                 poolId: poolToken.pool_id,
                 outcomeId: poolToken.outcome_id,
                 fees: feesEarned.toString(),
+                balance: poolToken.balance,
             };
         });
     } catch (error) {

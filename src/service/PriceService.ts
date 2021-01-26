@@ -1,4 +1,5 @@
 import Big from 'big.js';
+import BN from 'bn.js';
 import { Balance } from '../models/Balance';
 
 /**
@@ -24,13 +25,13 @@ export function calcPrice(poolBalances: string[]): number[] {
 
 
 export function getWeightForOutcome(outcome: number, balances: Balance[]): string {
-    let oddsWeightForTarget: Big = new Big(0);
+    let oddsWeightForTarget: BN = new BN(0);
 
     balances.forEach((balanceItem) => {
         if (balanceItem.outcome_id !== outcome) {
-            const balance = new Big(balanceItem.balance);
+            const balance = new BN(balanceItem.balance);
 
-            if (oddsWeightForTarget.eq(new Big(0))) {
+            if (oddsWeightForTarget.eq(new BN(0))) {
                 oddsWeightForTarget = balance;
             } else {
                 oddsWeightForTarget = oddsWeightForTarget.mul(balance);
