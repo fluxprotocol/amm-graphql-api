@@ -42,6 +42,7 @@ async function main() {
             account.resolvers,
             averagePriceDataPoint.resolvers,
             market.resolvers,
+            poolTokenFeesEarned.resolvers,
         ],
         tracing: true,
         debug: true,
