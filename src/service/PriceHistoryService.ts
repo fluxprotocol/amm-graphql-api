@@ -1,7 +1,6 @@
 import { Db } from "mongodb";
 import { addDays, format } from "date-fns";
 import { DateMetric, getDateMetricFormat } from "./DateService";
-import Big from "big.js";
 import { queryBalances } from "./UserBalanceService";
 import { PROTOCOL_ACCOUNT } from "../constants";
 import { calcPrice } from "./PriceService";

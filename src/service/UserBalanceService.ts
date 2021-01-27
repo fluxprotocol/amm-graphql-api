@@ -51,10 +51,15 @@ export async function queryBalances(db: Db, query: FilterQuery<Balance>, filterD
 
 export async function getBalancesByAccountId(db: Db, accountId: string, poolId?: string): Promise<Balance[]> {
     try {
-        return queryBalances(db, {
+        const query: FilterQuery<Balance> = {
             account_id: accountId,
-            pool_id: poolId,
-        });
+        }
+
+        if (poolId) {
+            query.pool_id = poolId;
+        }
+
+        return queryBalances(db, query);
     } catch (error) {
         console.error('[getBalancesByAccountId]', error);
         return [];
@@ -89,6 +94,11 @@ export async function getBalancesForPoolId(db: Db, poolId: string): Promise<Pool
 export async function getWithdrawableFees(db: Db, accountId: string): Promise<PoolTokensFeesEarnedViewModel[]> {
     try {
         const poolTokens = await getPoolTokensForAccountId(db, accountId);
+
+        if (!poolTokens.length) {
+            return [];
+        }
+
         const tokenStatusQuery: Partial<TokenStatus>[] = poolTokens.map(token => ({
             outcome_id: token.outcome_id,
             pool_id: token.pool_id,
@@ -102,6 +112,7 @@ export async function getWithdrawableFees(db: Db, accountId: string): Promise<Po
 
         const pools = await getPoolsByIds(db, poolTokens.map(token => token.pool_id));
         const tokenStatuses = await getTokensInfoByCondition(db, tokenStatusQuery);
+
         return poolTokens.map((poolToken) => {
             const pool = pools.find(pool => pool.id === poolToken.pool_id);
             const tokenStatus = tokenStatuses.find(status => status.pool_id === poolToken.pool_id);

@@ -5,25 +5,6 @@ import { getPoolById } from "./PoolService";
 
 const TOKEN_STATUSES_COLLECTION_NAME = 'token_statuses';
 
-async function filterDuplicateTokensInfo(cursor: Cursor<TokenStatus>): Promise<TokenStatus[]> {
-    const statuses: TokenStatus[] = [];
-    const visitedOutcomes: number[] = [];
-
-    while (await cursor.hasNext()) {
-        const status = await cursor.next();
-        if (!status) continue;
-
-        if (visitedOutcomes.includes(status.outcome_id)) {
-            continue;
-        }
-
-        statuses.push(status);
-        visitedOutcomes.push(status.outcome_id);
-    }
-
-    return statuses;
-}
-
 export async function getTokensInfoByPool(db: Db, poolId: string): Promise<TokenInfoViewModel[]> {
     try {
         const pool = await getPoolById(db, poolId);
@@ -38,7 +19,7 @@ export async function getTokensInfoByPool(db: Db, poolId: string): Promise<Token
         };
 
         const cursor = collection.find(query).sort({ cap_creation_date: -1 });
-        const statuses = await filterDuplicateTokensInfo(cursor);
+        const statuses = await cursor.toArray();
 
         return statuses.map(tokenStatus => transformToTokenInfoViewModel(tokenStatus, pool));
     } catch (error) {
@@ -85,7 +66,7 @@ export async function getTokensInfoByCondition(db: Db, conditions: Partial<Token
 
         const cursor = collection.find(query).sort({ cap_creation_date: -1 });
 
-        return filterDuplicateTokensInfo(cursor);
+        return cursor.toArray();
     } catch (error) {
         console.error('[queryTokensInfo]', error);
         return [];
