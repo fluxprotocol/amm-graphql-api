@@ -1,6 +1,6 @@
 import Big from 'big.js';
-import BN from 'bn.js';
 import { Balance } from '../models/Balance';
+
 
 /**
  * Computes the price of each outcome token given their holdings. Returns an array of numbers in the range [0, 1]
@@ -23,21 +23,28 @@ export function calcPrice(poolBalances: string[]): number[] {
     return prices.map(price => +price.valueOf());
 };
 
+interface OutcomeWeight {
+    outcomeId: number;
+    weight: Big;
+}
 
-export function getWeightForOutcome(outcome: number, balances: Balance[]): string {
-    let oddsWeightForTarget: BN = new BN(0);
+export function getOddsWeights(balances: Balance[]): OutcomeWeight[] {
+    return balances.map((outcomeBalance) => {
+        const otherOutcomeBalances = balances.filter(balance => balance.outcome_id !== outcomeBalance.outcome_id);
+        const oddsWeightForOutcome = otherOutcomeBalances.reduce((prev, current) => prev.mul(current.balance), new Big(1));
 
-    balances.forEach((balanceItem) => {
-        if (balanceItem.outcome_id !== outcome) {
-            const balance = new BN(balanceItem.balance);
-
-            if (oddsWeightForTarget.eq(new BN(0))) {
-                oddsWeightForTarget = balance;
-            } else {
-                oddsWeightForTarget = oddsWeightForTarget.mul(balance);
-            }
+        return {
+            outcomeId: outcomeBalance.outcome_id,
+            weight: oddsWeightForOutcome,
         }
     });
+}
 
-    return oddsWeightForTarget.toString();
+export function getOddsForOutcome(outcome: number, weights: OutcomeWeight[]): Big {
+    const oddsWeightForOutcome = weights.find(weight => weight.outcomeId === outcome);
+    const sum = weights.reduce((prev, current) => prev.add(current.weight), new Big(0));
+
+    if (!oddsWeightForOutcome) throw new Error('ERR_INVALID_OUTCOME');
+
+    return oddsWeightForOutcome.weight.div(sum);
 }

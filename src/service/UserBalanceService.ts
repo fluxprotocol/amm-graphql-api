@@ -1,13 +1,14 @@
 import { Cursor, Db, FilterQuery } from "mongodb";
+import Big from "big.js";
+
 import { Balance } from "../models/Balance";
 import { PROTOCOL_ACCOUNT } from '../constants';
-import { calcPrice, getWeightForOutcome } from "./PriceService";
+import { calcPrice, getOddsForOutcome, getOddsWeights } from "./PriceService";
 import { getTokensInfoByCondition } from './TokenStatusesService';
 import { PoolBalanceViewModel, transformToPoolBalanceViewModel } from "../models/PoolBalanceViewModel";
 import { getPoolsByIds, getPoolTokensForAccountId } from "./PoolService";
 import { TokenStatus } from "../models/TokenStatus";
 import { PoolTokensFeesEarnedViewModel } from "../models/PoolTokenFeesEarnedViewModel";
-import Big from "big.js";
 import { getWithdrawnFeesByCondition } from "./WithdrawnFeesService";
 
 const USER_BALANCES_COLLECTION_NAME = 'user_balances';
@@ -71,11 +72,13 @@ export async function getBalancesForPoolId(db: Db, poolId: string): Promise<Pool
         const cursor = collection.find<Balance>(query).sort({ cap_creation_date: -1 });
         const balances = await filterDuplicateBalances(cursor);
         const prices = calcPrice(balances.map(b => b.balance));
+        const weights = getOddsWeights(balances);
 
         return balances.map((balance, index) => transformToPoolBalanceViewModel(
             balance,
             prices[index],
-            getWeightForOutcome(balance.outcome_id, balances)
+            weights.find(weight => weight.outcomeId === balance.outcome_id)?.weight.toString() || "0",
+            getOddsForOutcome(balance.outcome_id, weights).toString(),
         ));
     } catch (error) {
         console.error('[getBalancesForPoolId]', error);
