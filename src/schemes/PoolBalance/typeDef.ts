@@ -10,6 +10,7 @@ const typeDef = gql`
         block_height: String
         price: Float
         weight: String
+        odds: String
     }
 `;
 
