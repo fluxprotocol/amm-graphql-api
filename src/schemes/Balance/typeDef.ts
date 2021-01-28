@@ -8,6 +8,7 @@ const typeDef = gql`
         account_id: String
         balance: String
         block_height: String
+        market: Market
     }
 `;
 

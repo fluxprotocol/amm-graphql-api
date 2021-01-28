@@ -1,5 +1,2 @@
-import typeDef from './typeDef';
-
-export {
-    typeDef,
-}
+export { default as typeDef } from './typeDef';
+export { default as resolvers } from './resolvers';
