@@ -42,9 +42,9 @@ export async function getPoolById(db: Db, id: string): Promise<Pool | null> {
     }
 }
 
-export async function getPoolTokensForAccountId(db: Db, accountId: string): Promise<Balance[]> {
+export async function getPoolTokensForAccountId(db: Db, accountId: string, poolId?: string): Promise<Balance[]> {
     try {
-        const balances = await getBalancesByAccountId(db, accountId);
+        const balances = await getBalancesByAccountId(db, accountId, poolId);
         const poolIds: string[] = [];
 
         balances.forEach((balance) => {

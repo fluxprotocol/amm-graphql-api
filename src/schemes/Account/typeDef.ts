@@ -6,7 +6,7 @@ const typeDef = gql`
 
         balances(poolId: String): [Balance]
 
-        earned_fees: [PoolTokenFeesEarned]
+        earned_fees(poolId: String): [PoolTokenFeesEarned]
     }
 
     extend type Query {

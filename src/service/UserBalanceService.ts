@@ -91,9 +91,9 @@ export async function getBalancesForPoolId(db: Db, poolId: string): Promise<Pool
     }
 }
 
-export async function getWithdrawableFees(db: Db, accountId: string): Promise<PoolTokensFeesEarnedViewModel[]> {
+export async function getWithdrawableFees(db: Db, accountId: string, poolId?: string): Promise<PoolTokensFeesEarnedViewModel[]> {
     try {
-        const poolTokens = await getPoolTokensForAccountId(db, accountId);
+        const poolTokens = await getPoolTokensForAccountId(db, accountId, poolId);
 
         if (!poolTokens.length) {
             return [];

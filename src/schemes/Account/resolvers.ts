@@ -8,8 +8,8 @@ const resolvers = {
             return getBalancesByAccountId(context.db, parent.account_id, args.poolId);
         },
 
-        earned_fees: async (parent: Account, args: any, context: Context) => {
-            return getWithdrawableFees(context.db, parent.account_id);
+        earned_fees: async (parent: Account, args: { poolId?: string }, context: Context) => {
+            return getWithdrawableFees(context.db, parent.account_id, args.poolId);
         },
     },
     Query: {
