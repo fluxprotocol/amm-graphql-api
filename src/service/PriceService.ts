@@ -46,5 +46,9 @@ export function getOddsForOutcome(outcome: number, weights: OutcomeWeight[]): Bi
 
     if (!oddsWeightForOutcome) throw new Error('ERR_INVALID_OUTCOME');
 
+    if (oddsWeightForOutcome.weight.eq(0) || sum.eq(0)) {
+        return new Big(0);
+    }
+
     return oddsWeightForOutcome.weight.div(sum);
 }
