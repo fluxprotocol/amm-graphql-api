@@ -3,9 +3,8 @@ import { WithdrawnFees } from "../models/WithdrawnFees";
 
 const WITHDRAWN_FEES_COLLECTION_NAME = 'withdrawn_fees';
 
-async function filterDuplicateWithdrawnFees(cursor: Cursor<WithdrawnFees>) {
-    const withdrawnFees: WithdrawnFees[] = [];
-    const visitedIds: string[] = [];
+async function filterDuplicateWithdrawnFees(cursor: Cursor<WithdrawnFees>): Promise<WithdrawnFees[]> {
+    const withdrawnFees: Map<string, WithdrawnFees> = new Map();
 
     // Manual load to filter out duplicate data
     while (await cursor.hasNext()) {
@@ -13,15 +12,22 @@ async function filterDuplicateWithdrawnFees(cursor: Cursor<WithdrawnFees>) {
         if (!withdrawnFee) continue;
         const id = `${withdrawnFee.pool_id}_${withdrawnFee.outcome_id}_${withdrawnFee.account_id}`;
 
-        if (visitedIds.includes(id)) {
+        if (withdrawnFees.has(id)) {
+            const visitedWithdrawnFee = withdrawnFees.get(id);
+
+            // Its possible that two actions have been performed on the exact same time
+            // The last item is considerd the newest
+            if (withdrawnFee.cap_creation_date.getTime() === visitedWithdrawnFee?.cap_creation_date.getTime()) {
+                withdrawnFees.set(id, withdrawnFee);
+            }
+
             continue;
         }
 
-        withdrawnFees.push(withdrawnFee);
-        visitedIds.push(id);
+        withdrawnFees.set(id, withdrawnFee);
     }
 
-    return withdrawnFees;
+    return Array.from(withdrawnFees.values());
 }
 
 
