@@ -48,6 +48,80 @@ export async function getMarkets(db: Db, filterOptions?: Partial<MarketFilters>)
         }
     }
 
+    const cursor2 = collection.aggregate([
+        {
+            $match: query,
+        },
+        // Find all buy swaps
+        {
+            $lookup: {
+                from: 'swaps',
+                // localField: 'pool_id',
+                // foreignField: 'id',
+                as: 'buySwaps',
+                pipeline: [
+                    {
+                        $match: {
+                            // $expr: {
+                            //     pool_id: '$$id',
+                            // },
+                            pool_id: '$id',
+                            type: 'buy',
+                        }
+                    }
+                ],
+            }
+        },
+        // Find all sell swaps
+        {
+            $lookup: {
+                from: 'swaps',
+                // localField: 'pool_id',
+                // foreignField: 'id',
+                as: 'sellSwaps',
+                pipeline: [
+                    {
+                        $match: {
+                            // $expr: {
+                                pool_id: '$id',
+                            // },
+                            type: 'sell'
+                        }
+                    }
+                ],
+            }
+        },
+        {
+            $addFields: {
+                volume: {
+                    $function: {
+                        body: `function(buySwaps, sellSwaps) {
+                            const buyInputs = buySwaps.map(i => parseInt(i.input.slice(0, -18)));
+                            const sellInputs = sellSwaps.map(i => parseInt(i.output.slice(0, -18)));
+                            let volume = 0;
+
+                            volume += buyInputs.filter(i => !Number.isNaN(i)).reduce((p, c) => p + c, 0);
+                            volume += sellInputs.filter(i => !Number.isNaN(i)).reduce((p, c) => p + c, 0);
+
+                            return volume;
+                        }`,
+                        args: ['$buySwaps', '$sellSwaps'],
+                        lang: "js",
+                    },
+                },
+            }
+        },
+        // {
+        //     $unset: ['buySwaps', 'sellSwaps'],
+        // }
+    ]);
+
+    const r = await cursor2.toArray();
+
+    r.forEach((i) => {
+        console.log(i);
+    });
+
     const cursor = collection.find<Market>(query, {
         sort: {
             cap_creation_date: -1,
