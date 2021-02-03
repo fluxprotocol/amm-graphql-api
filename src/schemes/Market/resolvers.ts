@@ -28,7 +28,10 @@ const resolvers = {
         },
 
         getMarkets: async (parent: any, args: { filters: MarketFilters }, context: Context) => {
-            return getMarkets(context.db, args.filters);
+            return getMarkets(context.db, {
+                ...args.filters,
+                sortByVolume: true,
+            });
         },
     },
 };

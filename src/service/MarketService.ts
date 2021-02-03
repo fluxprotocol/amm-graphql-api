@@ -10,6 +10,7 @@ export interface MarketFilters extends PaginationFilters {
     categories: string[];
     expired?: boolean;
     finalized?: boolean;
+    sortByVolume?: boolean;
 }
 
 export async function getMarkets(db: Db, filterOptions?: Partial<MarketFilters>): Promise<PaginationResult<Market>> {
@@ -20,6 +21,7 @@ export async function getMarkets(db: Db, filterOptions?: Partial<MarketFilters>)
         limit: 10,
         offset: 0,
         categories: [],
+        sortByVolume: false,
         ...filterOptions,
     };
 
@@ -48,26 +50,25 @@ export async function getMarkets(db: Db, filterOptions?: Partial<MarketFilters>)
         }
     }
 
-    const cursor = collection.aggregate([
-        // Regular query
-        {
-            $match: query,
-        },
-        // Find all swaps
-        {
-            $lookup: {
-                from: 'swaps',
-                localField: 'id',
-                foreignField: 'pool_id',
-                as: 'swaps',
-            }
-        },
-        // Calculate the volume
-        {
-            $addFields: {
-                volume: {
-                    $function: {
-                        body: `function(swaps) {
+    const pipeline: object[] = [{
+        $match: query,
+    }];
+
+    if (filters.sortByVolume) {
+        pipeline.push(...[
+            {
+                $lookup: {
+                    from: 'swaps',
+                    localField: 'id',
+                    foreignField: 'pool_id',
+                    as: 'swaps',
+                }
+            },
+            {
+                $addFields: {
+                    volume: {
+                        $function: {
+                            body: `function(swaps) {
                             const swapsAmount = swaps.map(i => {
                                 if (i.type === 'buy') {
                                     return parseInt(i.input.slice(0, -18));
@@ -78,22 +79,24 @@ export async function getMarkets(db: Db, filterOptions?: Partial<MarketFilters>)
 
                             return swapsAmount.filter(i => !Number.isNaN(i)).reduce((p, c) => p + c, 0);
                         }`,
-                        args: ['$swaps'],
-                        lang: "js",
+                            args: ['$swaps'],
+                            lang: "js",
+                        },
                     },
-                },
+                }
+            },
+            {
+                $unset: ['swaps'],
+            },
+            {
+                $sort: {
+                    volume: -1,
+                }
             }
-        },
-        // Saving memory
-        {
-            $unset: ['swaps'],
-        },
-        {
-            $sort: {
-                volume: -1,
-            }
-        }
-    ]).limit(filters.limit).skip(filters.offset);
+        ]);
+    }
+
+    const cursor = collection.aggregate(pipeline).limit(filters.limit).skip(filters.offset);
 
     return {
         items: await cursor.toArray(),
