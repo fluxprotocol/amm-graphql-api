@@ -2,6 +2,7 @@ import { Context } from "../../main";
 import { Market } from "../../models/Market";
 import { getMarketById, getMarkets, getVolumeForMarket, MarketFilters } from "../../service/MarketService";
 import { getPoolById } from "../../service/PoolService";
+import { toTokenDenom } from "../../service/TokenService";
 
 const resolvers = {
     Market: {
@@ -14,6 +15,10 @@ const resolvers = {
         },
 
         volume: async (parent: Market, args: any, context: Context) => {
+            if (typeof parent.volume !== 'undefined') {
+                return toTokenDenom(parent.volume.toString());
+            }
+
             return getVolumeForMarket(context.db, parent.id);
         },
     },

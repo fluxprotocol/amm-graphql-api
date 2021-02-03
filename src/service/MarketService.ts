@@ -48,85 +48,52 @@ export async function getMarkets(db: Db, filterOptions?: Partial<MarketFilters>)
         }
     }
 
-    const cursor2 = collection.aggregate([
+    const cursor = collection.aggregate([
+        // Regular query
         {
             $match: query,
         },
-        // Find all buy swaps
+        // Find all swaps
         {
             $lookup: {
                 from: 'swaps',
-                // localField: 'pool_id',
-                // foreignField: 'id',
-                as: 'buySwaps',
-                pipeline: [
-                    {
-                        $match: {
-                            // $expr: {
-                            //     pool_id: '$$id',
-                            // },
-                            pool_id: '$id',
-                            type: 'buy',
-                        }
-                    }
-                ],
+                localField: 'id',
+                foreignField: 'pool_id',
+                as: 'swaps',
             }
         },
-        // Find all sell swaps
-        {
-            $lookup: {
-                from: 'swaps',
-                // localField: 'pool_id',
-                // foreignField: 'id',
-                as: 'sellSwaps',
-                pipeline: [
-                    {
-                        $match: {
-                            // $expr: {
-                                pool_id: '$id',
-                            // },
-                            type: 'sell'
-                        }
-                    }
-                ],
-            }
-        },
+        // Calculate the volume
         {
             $addFields: {
                 volume: {
                     $function: {
-                        body: `function(buySwaps, sellSwaps) {
-                            const buyInputs = buySwaps.map(i => parseInt(i.input.slice(0, -18)));
-                            const sellInputs = sellSwaps.map(i => parseInt(i.output.slice(0, -18)));
-                            let volume = 0;
+                        body: `function(swaps) {
+                            const swapsAmount = swaps.map(i => {
+                                if (i.type === 'buy') {
+                                    return parseInt(i.input.slice(0, -18));
+                                }
 
-                            volume += buyInputs.filter(i => !Number.isNaN(i)).reduce((p, c) => p + c, 0);
-                            volume += sellInputs.filter(i => !Number.isNaN(i)).reduce((p, c) => p + c, 0);
+                                return parseInt(i.output.slice(0, -18));
+                            });
 
-                            return volume;
+                            return swapsAmount.filter(i => !Number.isNaN(i)).reduce((p, c) => p + c, 0);
                         }`,
-                        args: ['$buySwaps', '$sellSwaps'],
+                        args: ['$swaps'],
                         lang: "js",
                     },
                 },
             }
         },
-        // {
-        //     $unset: ['buySwaps', 'sellSwaps'],
-        // }
-    ]);
-
-    const r = await cursor2.toArray();
-
-    r.forEach((i) => {
-        console.log(i);
-    });
-
-    const cursor = collection.find<Market>(query, {
-        sort: {
-            cap_creation_date: -1,
+        // Saving memory
+        {
+            $unset: ['swaps'],
+        },
+        {
+            $sort: {
+                volume: -1,
+            }
         }
-    }).limit(filters.limit).skip(filters.offset);
+    ]).limit(filters.limit).skip(filters.offset);
 
     return {
         items: await cursor.toArray(),

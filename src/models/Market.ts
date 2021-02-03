@@ -9,5 +9,6 @@ export interface Market {
     payout_numerator: string[];
     finalized: boolean;
     pool?: Pool;
+    volume?: number;
     categories: string[];
 }
