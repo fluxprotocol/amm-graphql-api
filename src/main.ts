@@ -9,6 +9,7 @@ import * as poolBalances from './schemes/PoolBalance';
 import * as poolTokenFeesEarned from './schemes/PoolTokenFeesEarned';
 import * as averagePriceDataPoint from './schemes/AveragePriceDataPoint';
 import * as market from './schemes/Market';
+import * as claim from './schemes/Claim';
 import bootDatabase from './database';
 import { APP_PORT } from './constants';
 
@@ -36,6 +37,7 @@ async function main() {
             poolTokenFeesEarned.typeDef,
             averagePriceDataPoint.typeDef,
             market.typeDef,
+            claim.typeDef,
         ],
         resolvers: [
             pool.resolvers,

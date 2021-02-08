@@ -13,6 +13,7 @@ const typeDef = gql`
         categories: [String]
 
         volume: String
+        claimed_earnings(accountId: String): Claim
     }
 
     input MarketPaginationFilters {

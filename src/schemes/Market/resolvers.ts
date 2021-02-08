@@ -1,5 +1,6 @@
 import { Context } from "../../main";
 import { Market } from "../../models/Market";
+import { getClaimedEarningsForMarket } from "../../service/ClaimService";
 import { getMarketById, getMarkets, getVolumeForMarket, MarketFilters } from "../../service/MarketService";
 import { getPoolById } from "../../service/PoolService";
 import { toTokenDenom } from "../../service/TokenService";
@@ -20,6 +21,14 @@ const resolvers = {
             }
 
             return getVolumeForMarket(context.db, parent.id);
+        },
+
+        claimed_earnings: async (parent: Market, args: { accountId?: string }, context: Context) => {
+            if (!args.accountId) {
+                return null;
+            }
+
+            return getClaimedEarningsForMarket(context.db, args.accountId, parent.id);
         },
     },
     Query: {
