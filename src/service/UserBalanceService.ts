@@ -122,6 +122,16 @@ export async function getWithdrawableFees(db: Db, accountId: string, poolId?: st
                 throw new Error('Corrupted data');
             }
 
+            // Avoid div by 0 errors
+            if (tokenStatus.total_supply === '0') {
+                return {
+                    poolId: poolToken.pool_id,
+                    outcomeId: poolToken.outcome_id,
+                    fees: '0',
+                    balance: poolToken.balance,
+                };
+            }
+
             let feesEarned = (new Big(pool.fee_pool_weight).mul(poolToken.balance)).div(tokenStatus.total_supply);
 
             if (withdrawnFee) {
