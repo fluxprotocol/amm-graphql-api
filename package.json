@@ -23,7 +23,7 @@
         "mongodb": "^3.6.3"
     },
     "scripts": {
-        "start": "node 'dist/src/main.js'",
+        "start": "npm run build && node 'dist/src/main.js'",
         "build": "tsc -p .",
         "dev": "npm run build:dev",
         "build:dev": "nodemon 'src/main.ts' --exec 'ts-node' src/main.ts -e ts,graphql,json"

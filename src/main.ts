@@ -10,6 +10,7 @@ import * as poolTokenFeesEarned from './schemes/PoolTokenFeesEarned';
 import * as averagePriceDataPoint from './schemes/AveragePriceDataPoint';
 import * as market from './schemes/Market';
 import * as claim from './schemes/Claim';
+import * as escrowStatus from './schemes/EscrowStatus';
 import bootDatabase from './database';
 import { APP_PORT } from './constants';
 
@@ -38,6 +39,7 @@ async function main() {
             averagePriceDataPoint.typeDef,
             market.typeDef,
             claim.typeDef,
+            escrowStatus.typeDef,
         ],
         resolvers: [
             pool.resolvers,
@@ -46,6 +48,7 @@ async function main() {
             market.resolvers,
             poolTokenFeesEarned.resolvers,
             balances.resolvers,
+            escrowStatus.resolvers,
         ],
         tracing: true,
         debug: true,
