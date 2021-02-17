@@ -14,6 +14,7 @@ const typeDef = gql`
 
         volume: String
         claimed_earnings(accountId: String): Claim
+        escrow_status(accountId: String): [EscrowStatus]
     }
 
     input MarketPaginationFilters {

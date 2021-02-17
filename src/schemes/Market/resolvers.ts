@@ -1,6 +1,7 @@
 import { Context } from "../../main";
 import { Market } from "../../models/Market";
 import { getClaimedEarningsForMarket } from "../../service/ClaimService";
+import { getEscrowStatusForAccountByMarket } from "../../service/EscrowStatusServices";
 import { getMarketById, getMarkets, getVolumeForMarket, MarketFilters } from "../../service/MarketService";
 import { getPoolById } from "../../service/PoolService";
 import { toTokenDenom } from "../../service/TokenService";
@@ -30,6 +31,14 @@ const resolvers = {
 
             return getClaimedEarningsForMarket(context.db, args.accountId, parent.id);
         },
+
+        escrow_status: async (parent: Market, args: { accountId?: string }, context: Context) => {
+            if (!args.accountId) {
+                return null;
+            }
+
+            return getEscrowStatusForAccountByMarket(context.db, args.accountId, parent.id);
+        }
     },
     Query: {
         getMarket: async (parent: any, args: { marketId: string }, context: Context) => {
