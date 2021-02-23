@@ -11,4 +11,5 @@ export interface Market {
     pool?: Pool;
     volume?: number;
     categories: string[];
+    creation_date: string;
 }

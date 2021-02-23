@@ -11,6 +11,7 @@ const typeDef = gql`
         payout_numerator: [String]
         finalized: Boolean
         categories: [String]
+        creation_date: String
 
         volume: String
         claimed_earnings(accountId: String): Claim
