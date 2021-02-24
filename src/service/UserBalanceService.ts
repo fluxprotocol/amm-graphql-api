@@ -13,24 +13,30 @@ import { getWithdrawnFeesByCondition } from "./WithdrawnFeesService";
 
 const USER_BALANCES_COLLECTION_NAME = 'user_balances';
 
-async function filterDuplicateBalances(cursor: Cursor<Balance>) {
-    const balances: Balance[] = [];
-    const visitedIds: string[] = [];
+async function filterDuplicateBalances(cursor: Cursor<Balance>): Promise<Balance[]> {
+    const balances: Map<string, Balance> = new Map();
 
     // Manual load to filter out duplicate data
     while (await cursor.hasNext()) {
         const balance = await cursor.next();
         if (!balance) continue;
 
-        if (visitedIds.includes(balance.id)) {
+        if (balances.has(balance.id)) {
+            const visitedBalance = balances.get(balance.id);
+
+            // Its possible that two actions have been performed on the exact same time
+            // The last item is considerd the newest
+            if (balance.cap_creation_date.getTime() === visitedBalance?.cap_creation_date.getTime()) {
+                balances.set(balance.id, balance);
+            }
+
             continue;
         }
 
-        balances.push(balance);
-        visitedIds.push(balance.id);
+        balances.set(balance.id, balance);
     }
 
-    return balances;
+    return Array.from(balances.values());
 }
 
 export async function queryBalances(db: Db, query: FilterQuery<Balance>, filterDuplicates = true): Promise<Balance[]> {

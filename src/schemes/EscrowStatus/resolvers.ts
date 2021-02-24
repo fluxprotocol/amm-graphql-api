@@ -1,9 +1,5 @@
 import { Context } from "../../main";
-import { Pool } from "../../models/Pool";
 import { getEscrowStatusForAccountByMarket } from "../../service/EscrowStatusServices";
-import { getPoolById } from "../../service/PoolService";
-import { getTokensInfoByPool } from "../../service/TokenStatusesService";
-import { getBalancesForPoolId } from "../../service/UserBalanceService";
 
 const resolvers = {
     Query: {
