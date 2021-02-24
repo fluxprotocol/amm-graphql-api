@@ -11,6 +11,7 @@ import * as averagePriceDataPoint from './schemes/AveragePriceDataPoint';
 import * as market from './schemes/Market';
 import * as claim from './schemes/Claim';
 import * as escrowStatus from './schemes/EscrowStatus';
+import executeMigrations from './executeMigrations';
 import bootDatabase from './database';
 import { APP_PORT } from './constants';
 
@@ -22,6 +23,7 @@ async function main() {
     console.info('🚀 Booting GraphQL server..');
 
     const database = await bootDatabase();
+    await executeMigrations(database);
     const typeDef = gql`
         type Query
     `;

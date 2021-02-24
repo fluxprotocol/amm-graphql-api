@@ -10,6 +10,7 @@ import { getPoolsByIds, getPoolTokensForAccountId } from "./PoolService";
 import { TokenStatus } from "../models/TokenStatus";
 import { PoolTokensFeesEarnedViewModel } from "../models/PoolTokenFeesEarnedViewModel";
 import { getWithdrawnFeesByCondition } from "./WithdrawnFeesService";
+import { getClaimedEarningsByAccount, getClaimedEarningsForMarket } from "./ClaimService";
 
 const USER_BALANCES_COLLECTION_NAME = 'user_balances';
 
@@ -26,7 +27,7 @@ async function filterDuplicateBalances(cursor: Cursor<Balance>): Promise<Balance
 
             // Its possible that two actions have been performed on the exact same time
             // The last item is considerd the newest
-            if (new Date(balance.creation_date).getTime() === new Date(visitedBalance?.creation_date ?? 0).getTime()) {
+            if (new Date(Number(balance.creation_date)).getTime() === new Date(Number(visitedBalance?.creation_date ?? 0)).getTime()) {
                 balances.set(balance.id, balance);
             }
 
@@ -74,6 +75,12 @@ export async function getBalancesByAccountId(db: Db, accountId: string, poolId?:
 
         if (options.removeZeroBalances) {
             balances = balances.filter(b => b.balance !== '0');
+        }
+
+        if (options.removeClaimedBalances) {
+            const claims = await getClaimedEarningsByAccount(db, accountId);
+            const claimsMarketIds = claims.map(claim => claim.market_id);
+            balances = balances.filter(b => !claimsMarketIds.includes(b.pool_id));
         }
 
         return balances;

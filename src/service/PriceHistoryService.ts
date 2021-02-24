@@ -70,11 +70,11 @@ export async function getPriceHistory(db: Db, poolId: string, beginTimestamp: nu
         const dateFormatKey = getDateMetricFormat(dateMetric);
 
         balances.forEach((balance) => {
-            const dataPointKey = format(new Date(balance.creation_date), dateFormatKey);
+            const dataPointKey = format(new Date(Number(balance.creation_date)), dateFormatKey);
             const dataPoint: DataPoint = {
                 outcome: balance.outcome_id,
                 balance: balance.balance,
-                cap_creation_date: new Date(balance.creation_date),
+                cap_creation_date: new Date(Number(balance.creation_date)),
             };
 
             if (!outcomesInMarket.includes(balance.outcome_id)) {
@@ -117,7 +117,7 @@ export async function getPriceForDay(db: Db, poolId: string, beginTimestamp: num
         const dataPoint: DataPoint = {
             outcome: balance.outcome_id,
             balance: balance.balance,
-            cap_creation_date: new Date(balance.creation_date),
+            cap_creation_date: new Date(Number(balance.creation_date)),
         };
 
         if (!outcomesInMarket.includes(balance.outcome_id)) {

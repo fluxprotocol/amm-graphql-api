@@ -23,3 +23,11 @@ export async function getClaimedEarningsForMarket(db: Db, accountId: string, mar
 
     return claims.length > 0 ? claims[0] : null;
 }
+
+export async function getClaimedEarningsByAccount(db: Db, accountId: string) {
+    const claims = await queryClaims(db, {
+        claimer: accountId,
+    });
+
+    return claims;
+}
