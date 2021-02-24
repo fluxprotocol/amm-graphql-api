@@ -12,7 +12,10 @@ const resolvers = {
         },
 
         earned_fees: async (parent: Account, args: { poolId?: string, removeClaimedBalances?: boolean, removeZeroBalances?: boolean }, context: Context) => {
-            return getWithdrawableFees(context.db, parent.account_id, args.poolId);
+            return getWithdrawableFees(context.db, parent.account_id, args.poolId, {
+                removeClaimedBalances: args.removeClaimedBalances,
+                removeZeroBalances: args.removeZeroBalances,
+            });
         },
     },
     Query: {

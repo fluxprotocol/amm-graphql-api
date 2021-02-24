@@ -10,7 +10,7 @@ import { getPoolsByIds, getPoolTokensForAccountId } from "./PoolService";
 import { TokenStatus } from "../models/TokenStatus";
 import { PoolTokensFeesEarnedViewModel } from "../models/PoolTokenFeesEarnedViewModel";
 import { getWithdrawnFeesByCondition } from "./WithdrawnFeesService";
-import { getClaimedEarningsByAccount, getClaimedEarningsForMarket } from "./ClaimService";
+import { getClaimedEarningsByAccount } from "./ClaimService";
 
 const USER_BALANCES_COLLECTION_NAME = 'user_balances';
 
@@ -115,7 +115,12 @@ export async function getBalancesForPoolId(db: Db, poolId: string): Promise<Pool
     }
 }
 
-export async function getWithdrawableFees(db: Db, accountId: string, poolId?: string): Promise<PoolTokensFeesEarnedViewModel[]> {
+export interface WithdrawableFeesOptions {
+    removeZeroBalances?: boolean;
+    removeClaimedBalances?: boolean;
+}
+
+export async function getWithdrawableFees(db: Db, accountId: string, poolId?: string, options: WithdrawableFeesOptions = {}): Promise<PoolTokensFeesEarnedViewModel[]> {
     try {
         const poolTokens = await getPoolTokensForAccountId(db, accountId, poolId);
 
@@ -137,7 +142,7 @@ export async function getWithdrawableFees(db: Db, accountId: string, poolId?: st
         const pools = await getPoolsByIds(db, poolTokens.map(token => token.pool_id));
         const tokenStatuses = await getTokensInfoByCondition(db, tokenStatusQuery);
 
-        return poolTokens.map((poolToken) => {
+        let balances: PoolTokensFeesEarnedViewModel[] = poolTokens.map((poolToken) => {
             const pool = pools.find(pool => pool.id === poolToken.pool_id);
             const tokenStatus = tokenStatuses.find(status => status.pool_id === poolToken.pool_id);
             const withdrawnFee = withdrawnFees.find(fee => fee.pool_id === poolToken.pool_id);
@@ -169,6 +174,18 @@ export async function getWithdrawableFees(db: Db, accountId: string, poolId?: st
                 balance: poolToken.balance,
             };
         });
+
+        if (options.removeZeroBalances) {
+            balances = balances.filter(b => b.balance !== '0');
+        }
+
+        if (options.removeClaimedBalances) {
+            const claims = await getClaimedEarningsByAccount(db, accountId);
+            const claimsMarketIds = claims.map(claim => claim.market_id);
+            balances = balances.filter(b => !claimsMarketIds.includes(b.poolId));
+        }
+
+        return balances;
     } catch (error) {
         console.error('[getWithdrawableFees]', error);
         return [];
