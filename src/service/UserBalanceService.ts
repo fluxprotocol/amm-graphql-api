@@ -26,7 +26,7 @@ async function filterDuplicateBalances(cursor: Cursor<Balance>): Promise<Balance
 
             // Its possible that two actions have been performed on the exact same time
             // The last item is considerd the newest
-            if (balance.cap_creation_date.getTime() === visitedBalance?.cap_creation_date.getTime()) {
+            if (new Date(balance.creation_date).getTime() === new Date(visitedBalance?.creation_date ?? 0).getTime()) {
                 balances.set(balance.id, balance);
             }
 
@@ -42,7 +42,7 @@ async function filterDuplicateBalances(cursor: Cursor<Balance>): Promise<Balance
 export async function queryBalances(db: Db, query: FilterQuery<Balance>, filterDuplicates = true): Promise<Balance[]> {
     try {
         const collection = db.collection(USER_BALANCES_COLLECTION_NAME);
-        const cursor = collection.find<Balance>(query).sort({ cap_creation_date: -1 });
+        const cursor = collection.find<Balance>(query).sort({ creation_date: -1 });
 
         if (filterDuplicates) {
             return filterDuplicateBalances(cursor);
@@ -55,7 +55,12 @@ export async function queryBalances(db: Db, query: FilterQuery<Balance>, filterD
     }
 }
 
-export async function getBalancesByAccountId(db: Db, accountId: string, poolId?: string): Promise<Balance[]> {
+export interface AccountBalancesOptions {
+    removeZeroBalances?: boolean;
+    removeClaimedBalances?: boolean;
+}
+
+export async function getBalancesByAccountId(db: Db, accountId: string, poolId?: string, options: AccountBalancesOptions = {}): Promise<Balance[]> {
     try {
         const query: FilterQuery<Balance> = {
             account_id: accountId,
@@ -65,7 +70,13 @@ export async function getBalancesByAccountId(db: Db, accountId: string, poolId?:
             query.pool_id = poolId;
         }
 
-        return queryBalances(db, query);
+        let balances = await queryBalances(db, query);
+
+        if (options.removeZeroBalances) {
+            balances = balances.filter(b => b.balance !== '0');
+        }
+
+        return balances;
     } catch (error) {
         console.error('[getBalancesByAccountId]', error);
         return [];
@@ -80,7 +91,7 @@ export async function getBalancesForPoolId(db: Db, poolId: string): Promise<Pool
             pool_id: poolId,
         };
 
-        const cursor = collection.find<Balance>(query).sort({ cap_creation_date: -1 });
+        const cursor = collection.find<Balance>(query).sort({ creation_date: -1 });
         const balances = await filterDuplicateBalances(cursor);
         const prices = calcPrice(balances.map(b => b.balance));
         const weights = getOddsWeights(balances);
