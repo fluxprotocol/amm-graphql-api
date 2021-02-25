@@ -61,6 +61,8 @@ export async function queryBalances(db: Db, query: FilterQuery<Balance>, queryOp
 
         if (options.filterDuplicates) {
             balances = await filterDuplicateBalances(cursor);
+        } else {
+            balances = await cursor.toArray();
         }
 
         // Combines the market account statuses with the balances

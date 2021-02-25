@@ -60,8 +60,8 @@ export async function getPriceHistory(db: Db, poolId: string, beginTimestamp: nu
             account_id: PROTOCOL_ACCOUNT,
             pool_id: poolId,
             creation_date: {
-                $gte: new Date(beginTimestamp).getTime().toString(),
-                $lte: new Date(endTimestamp).getTime().toString(),
+                $gte: beginTimestamp.toString(),
+                $lte: endTimestamp.toString(),
             }
         }, {
             filterDuplicates: false,
