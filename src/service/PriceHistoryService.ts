@@ -63,7 +63,9 @@ export async function getPriceHistory(db: Db, poolId: string, beginTimestamp: nu
                 $gte: new Date(beginTimestamp).getTime().toString(),
                 $lte: new Date(endTimestamp).getTime().toString(),
             }
-        }, false);
+        }, {
+            filterDuplicates: false,
+        });
 
         const dataPoints = new Map<string, DataPoint[]>();
         const outcomesInMarket: number[] = [];

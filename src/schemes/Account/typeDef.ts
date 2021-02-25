@@ -5,7 +5,6 @@ const typeDef = gql`
         account_id: String
 
         balances(poolId: String, removeClaimedBalances: Boolean, removeZeroBalances: Boolean): [Balance]
-
         earned_fees(poolId: String, removeClaimedBalances: Boolean, removeZeroBalances: Boolean): [PoolTokenFeesEarned]
     }
 

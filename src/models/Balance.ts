@@ -6,4 +6,5 @@ export interface Balance {
     balance: string;
     block_height: string;
     creation_date: string;
+    spent?: string;
 }

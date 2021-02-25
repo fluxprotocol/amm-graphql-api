@@ -7,6 +7,7 @@ const typeDef = gql`
         outcome_id: Int
         account_id: String
         balance: String
+        spent: String
         block_height: String
         market: Market
     }

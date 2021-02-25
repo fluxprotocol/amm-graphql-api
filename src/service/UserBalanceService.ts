@@ -11,6 +11,8 @@ import { TokenStatus } from "../models/TokenStatus";
 import { PoolTokensFeesEarnedViewModel } from "../models/PoolTokenFeesEarnedViewModel";
 import { getWithdrawnFeesByCondition } from "./WithdrawnFeesService";
 import { getClaimedEarningsByAccount } from "./ClaimService";
+import { queryMarketAccountStatuses } from "./MarketAccountStatuses";
+import { MarketAccountStatus } from "../models/MarketAccountStatus";
 
 const USER_BALANCES_COLLECTION_NAME = 'user_balances';
 
@@ -40,16 +42,56 @@ async function filterDuplicateBalances(cursor: Cursor<Balance>): Promise<Balance
     return Array.from(balances.values());
 }
 
-export async function queryBalances(db: Db, query: FilterQuery<Balance>, filterDuplicates = true): Promise<Balance[]> {
+interface QueryBalancesOptions {
+    filterDuplicates?: boolean;
+    addSpent?: boolean;
+}
+
+export async function queryBalances(db: Db, query: FilterQuery<Balance>, queryOptions: QueryBalancesOptions = {}): Promise<Balance[]> {
     try {
+        const options: QueryBalancesOptions = {
+            filterDuplicates: true,
+            addSpent: false,
+            ...queryOptions,
+        };
+
         const collection = db.collection(USER_BALANCES_COLLECTION_NAME);
         const cursor = collection.find<Balance>(query).sort({ creation_date: -1 });
+        let balances: Balance[] = [];
 
-        if (filterDuplicates) {
-            return filterDuplicateBalances(cursor);
+        if (options.filterDuplicates) {
+            balances = await filterDuplicateBalances(cursor);
         }
 
-        return cursor.toArray();
+        // Combines the market account statuses with the balances
+        if (options.addSpent) {
+            const accountStatusQuery: FilterQuery<MarketAccountStatus> = {
+                account_id: query.account_id,
+            };
+
+            if (query.pool_id) accountStatusQuery.market_id = query.pool_id;
+            const accountsStatuses = await queryMarketAccountStatuses(db, accountStatusQuery);
+
+            // Convert to map first in order to make lookups faster
+            const mappedAccountsStatuses = new Map<string, MarketAccountStatus>(accountsStatuses.map(s => [`${s.account_id}_${s.market_id}`, s]));
+
+            balances = balances.map((balance) => {
+                const accountStatus = mappedAccountsStatuses.get(`${balance.account_id}_${balance.pool_id}`);
+                if (!accountStatus) {
+                    return {
+                        ...balance,
+                        spent: '0'
+                    };
+                }
+
+                return {
+                    ...balance,
+                    spent: accountStatus.spent.find(s => s.outcome_id === balance.outcome_id)?.spent ?? '0',
+                }
+            });
+        }
+
+        return balances;
     } catch (error) {
         console.error('[queryBalances]', error);
         return [];
@@ -71,7 +113,9 @@ export async function getBalancesByAccountId(db: Db, accountId: string, poolId?:
             query.pool_id = poolId;
         }
 
-        let balances = await queryBalances(db, query);
+        let balances = await queryBalances(db, query, {
+            addSpent: true,
+        });
 
         if (options.removeZeroBalances) {
             balances = balances.filter(b => b.balance !== '0');
