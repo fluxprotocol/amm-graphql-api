@@ -12,4 +12,5 @@ export interface Market {
     volume?: number;
     categories: string[];
     creation_date: string;
+    is_scalar: boolean;
 }

@@ -12,6 +12,7 @@ const typeDef = gql`
         finalized: Boolean
         categories: [String]
         creation_date: String
+        is_scalar: Boolean
 
         volume: String
         claimed_earnings(accountId: String): Claim
