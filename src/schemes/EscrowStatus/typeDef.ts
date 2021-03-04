@@ -6,10 +6,11 @@ const typeDef = gql`
         account_id: String
         total_amount: String
         type: String
+        market: Market
     }
 
     extend type Query {
-        getEscrowStatus(marketId: String!, accountId: String!): [EscrowStatus]
+        getEscrowStatus(marketId: String, accountId: String!): [EscrowStatus]
     }
 `;
 

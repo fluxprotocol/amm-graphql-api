@@ -15,7 +15,7 @@ export async function queryEscrowStatuses(db: Db, query: FilterQuery<EscrowStatu
     }
 }
 
-export async function getEscrowStatusForAccountByMarket(db: Db, accountId: string, marketId: string): Promise<EscrowStatus[]> {
+export async function getEscrowStatusForAccountByMarket(db: Db, accountId: string, marketId?: string): Promise<EscrowStatus[]> {
     return queryEscrowStatuses(db, {
         account_id: accountId,
         market_id: marketId,
