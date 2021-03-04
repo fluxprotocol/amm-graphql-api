@@ -16,8 +16,11 @@ export async function queryEscrowStatuses(db: Db, query: FilterQuery<EscrowStatu
 }
 
 export async function getEscrowStatusForAccountByMarket(db: Db, accountId: string, marketId?: string): Promise<EscrowStatus[]> {
-    return queryEscrowStatuses(db, {
+    const query: FilterQuery<EscrowStatus> = {
         account_id: accountId,
-        market_id: marketId,
-    });
+    }
+    if (marketId) {
+        query.market_id = marketId
+    }
+    return queryEscrowStatuses(db, query);
 }
