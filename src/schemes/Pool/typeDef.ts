@@ -5,6 +5,7 @@ const typeDef = gql`
         id: String
         outcomes: Int
         collateral_token_id: String
+        collateral_denomination: String
         owner: String
         swap_fee: String
         total_withdrawn_fees: String

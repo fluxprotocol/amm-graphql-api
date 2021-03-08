@@ -17,8 +17,9 @@ const resolvers = {
         },
 
         volume: async (parent: Market, args: any, context: Context) => {
-            if (typeof parent.volume !== 'undefined') {
-                return toTokenDenom(parent.volume.toString());
+            if (typeof parent.volume !== 'undefined' && parent.pool?.collateral_denomination) {
+                const decimals = parent.pool.collateral_denomination.length - 1;
+                return toTokenDenom(parent.volume.toString(), decimals);
             }
 
             return getVolumeForMarket(context.db, parent.id);

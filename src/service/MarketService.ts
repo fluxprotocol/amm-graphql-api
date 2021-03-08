@@ -56,6 +56,7 @@ export async function getMarkets(db: Db, filterOptions?: Partial<MarketFilters>)
 
     if (filters.sortByVolume) {
         pipeline.push(...[
+            // Take all the swaps
             {
                 $lookup: {
                     from: 'swaps',
@@ -64,22 +65,42 @@ export async function getMarkets(db: Db, filterOptions?: Partial<MarketFilters>)
                     as: 'swaps',
                 }
             },
+            // Take all the pools
+            {
+                $lookup: {
+                    from: 'pools',
+                    localField: 'id',
+                    foreignField: 'id',
+                    as: 'pool',
+                }
+            },
+            // Only show 1 pool (a market cannot have multiple pools)
+            {
+                $addFields: {
+                    pool: {
+                        '$arrayElemAt': [ '$pool', 0 ],
+                    }
+                },
+            },
             {
                 $addFields: {
                     volume: {
                         $function: {
-                            body: `function(swaps) {
-                            const swapsAmount = swaps.map(i => {
-                                if (i.type === 'buy') {
-                                    return parseInt(i.input.slice(0, -18));
-                                }
+                            // We use the denom stored in the pool or just assume it's denom in 24 decimals
+                            // minus 2 (/ divided by 100) for decimals
+                            body: `function(swaps, pool) {
+                                const tokenDenom = (pool.collateral_denomination ? pool.collateral_denomination.length - 1 : 24) - 2;
+                                const swapsAmount = swaps.map(i => {
+                                    if (i.type === 'buy') {
+                                        return parseInt(i.input.slice(0, -tokenDenom));
+                                    }
 
-                                return parseInt(i.output.slice(0, -18));
-                            });
+                                    return parseInt(i.output.slice(0, -tokenDenom));
+                                });
 
-                            return swapsAmount.filter(i => !Number.isNaN(i)).reduce((p, c) => p + c, 0);
+                                return swapsAmount.filter(i => !Number.isNaN(i)).reduce((p, c) => p + c, 0) / 100;
                         }`,
-                            args: ['$swaps'],
+                            args: ['$swaps', '$pool'],
                             lang: "js",
                         },
                     },
